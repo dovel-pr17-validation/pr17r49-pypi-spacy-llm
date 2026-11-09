@@ -1,0 +1,32 @@
+name: Explosion Bot
+
+on:
+  issue_comment:
+    types:
+      - created
+      - edited
+
+permissions: {}
+
+jobs:
+  explosion-bot:
+    if: github.repository_owner == 'explosion'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Dump GitHub context
+        env:
+          GITHUB_CONTEXT: ${{ toJson(github) }}
+        run: echo "$GITHUB_CONTEXT"
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
+      - name: Install and run explosion-bot
+        run: |
+          git config --global url."https://x-access-token:${EXPLOSIONBOT_TOKEN}@github.com/".insteadOf "https://github.com/"
+          pip install git+https://github.com/explosion/explosion-bot
+          python -m explosionbot
+        env:
+          EXPLOSIONBOT_TOKEN: ${{ secrets.EXPLOSIONBOT_TOKEN }}
+          INPUT_TOKEN: ${{ secrets.EXPLOSIONBOT_TOKEN }}
+          INPUT_BK_TOKEN: ${{ secrets.BUILDKITE_SECRET }}
+          ENABLED_COMMANDS: "test_gpu,test_llm_external"
+          ALLOWED_TEAMS: "spaCy"
